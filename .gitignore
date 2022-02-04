@@ -1,0 +1,4 @@
+questdb*
+.env
+__pycache__/
+venv/
