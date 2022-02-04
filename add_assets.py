@@ -13,24 +13,36 @@ if __name__ == '__main__':
 
     key, secret = bu.get_credentials()
     client = bu.get_client(key, secret)
-    tickers = bu.get_tickers(client)[:2]
+    tickers = bu.get_tickers(client)[]
     #print(len(tickers), tickers)
 
     dbh = connect.DBHandler()
     cursor = dbh.get_cursor()
     start_date = '2021-01-01'
-    end_date = '2022-12-31'
+    end_date = '2021-01-02'
     print(f'attempting insert for {len(tickers)} tickers')
-    for ticker in tickers:
-        print(ticker)
+
+    for date in pd.date_range(start_date, end_date, freq='d'):
+        current_date = date.date()
+        daily_df = pd.DataFrame()
+        for ticker in tickers:
+            try:
+                klines_df = bu.get_historical_klines(client, ticker, current_date, current_date+pd.DateOffset(1), interval=bu.Consts.INTERVAL_1MIN)
+                klines_df['ticker'] = ticker
+                daily_df = pd.concat([daily_df, klines_df])
+            except:
+                print('Could not fetch data for date', current_date, 'and ticker', ticker)
+
+        daily_df = daily_df.sort_values(by='close_t')
+        
         try:
-            insert_asset(ticker, "crypto", dbh)
-            klines_df = bu.get_historical_klines(client, 'VETBUSD', start_date, end_date, interval=bu.Consts.INTERVAL_1MIN)
-            klines_df = klines_df.values.tolist()
-            for row in klines_df:
+            
+            daily_df = daily_df.values.tolist()[:-1] # remove last entry to remove dupes
+            print(len(daily_df))
+            for row in daily_df:
                 # Want: ticker, close_t,"open,high,low,"close",volume,qav,n_trades,tbbav,tbqav,ignore
                 to_insert = [
-                    ticker,
+                    row[11],
                     row[5],
                     float(row[0]),
                     float(row[1]),
@@ -50,3 +62,5 @@ if __name__ == '__main__':
         
         #insert_df(klines_df, 'klines_1m', dbh)
     #insert_df(klines_df, 'klines_1m')
+    print('done')
+    exit()

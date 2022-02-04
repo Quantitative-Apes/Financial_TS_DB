@@ -17,4 +17,4 @@ CREATE TABLE klines_1min(
     tbqav FLOAT,
     ignore INT)
 timestamp(close_t)
-PARTITION BY MONTH;
+PARTITION BY DAY;
