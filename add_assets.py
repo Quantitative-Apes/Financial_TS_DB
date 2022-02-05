@@ -2,24 +2,18 @@ import connect
 import binance_utils as bu
 import pandas as pd
 
-def insert_asset(ticker:str, type:str, dbh:connect.DBHandler):
-    cursor = dbh.get_cursor()
-    
-    cursor.execute(f"""
-    INSERT INTO assets VALUES (%s, %s);
-    """, (ticker, type))
-
 if __name__ == '__main__':
 
     key, secret = bu.get_credentials()
     client = bu.get_client(key, secret)
-    tickers = bu.get_tickers(client)[]
-    #print(len(tickers), tickers)
+    tickers = bu.get_tickers(client)
+    print(tickers)
+    tickers = tickers[:1]
 
     dbh = connect.DBHandler()
     cursor = dbh.get_cursor()
     start_date = '2021-01-01'
-    end_date = '2021-01-02'
+    end_date = '2021-12-31'
     print(f'attempting insert for {len(tickers)} tickers')
 
     for date in pd.date_range(start_date, end_date, freq='d'):
@@ -33,34 +27,34 @@ if __name__ == '__main__':
             except:
                 print('Could not fetch data for date', current_date, 'and ticker', ticker)
 
-        daily_df = daily_df.sort_values(by='close_t')
+        daily_df = daily_df.sort_values(by='open_t')
         
         try:
             
             daily_df = daily_df.values.tolist()[:-1] # remove last entry to remove dupes
             print(len(daily_df))
             for row in daily_df:
-                # Want: ticker, close_t,"open,high,low,"close",volume,qav,n_trades,tbbav,tbqav,ignore
+                # Want: ticker, open_t, close_t,"open,high,low,"close",volume,qav,n_trades,tbbav,tbqav,ignore
                 to_insert = [
-                    row[11],
-                    row[5],
-                    float(row[0]),
+                    row[12],
+                    row[0],
+                    row[6],
                     float(row[1]),
                     float(row[2]),
                     float(row[3]),
                     float(row[4]),
-                    float(row[6]),
-                    int(row[7]),
-                    float(row[8]),
+                    float(row[5]),
+                    float(row[7]),
+                    int(row[8]),
                     float(row[9]),
-                    int(row[10]),
+                    float(row[10]),
+                    int(row[11]),
                 ]
-                cursor.execute(f"INSERT INTO klines_1min VALUES({('%s,'*12)[:-1]});", to_insert)
+                #print(to_insert)
+                cursor.execute(f"INSERT INTO klines_1min VALUES({('%s,'*13)[:-1]});", to_insert)
                 dbh.commit()
         except Exception as e:
             print(ticker, 'failed. error:', e)
         
-        #insert_df(klines_df, 'klines_1m', dbh)
-    #insert_df(klines_df, 'klines_1m')
     print('done')
     exit()

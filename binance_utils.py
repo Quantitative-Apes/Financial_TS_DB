@@ -71,9 +71,8 @@ def get_historical_klines(client:binance.Client, ticker:str, start_date:str, end
             new_klines],
             axis=0
         )
-    klines.open_t = pd.to_datetime(klines.open_t, unit='ms')
-    klines.close_t = pd.to_datetime(klines.close_t, unit='ms')
-    klines = klines.set_index('open_t')
+    klines.open_t = pd.to_datetime(klines.open_t, unit='ms').round('min')
+    klines.close_t = pd.to_datetime(klines.close_t, unit='ms').round('min')
     return klines
 
 if __name__ == '__main__':
